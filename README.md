@@ -70,6 +70,15 @@ You can run the keylogger as a secondary process:<br/>
         style="float: left; margin-right: 10px;">
 </p>
 
+Finally, every thirty seconds, you will receive the captured keystrokes:<br/>
+
+<p align="center">
+    <img width="700"
+        src="images/006.png"
+        alt="Tool excecution Example"
+        style="float: left; margin-right: 10px;">
+</p>
+
 ## How do I use it?
 
 - **Sender:**
